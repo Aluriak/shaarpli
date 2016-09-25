@@ -1,0 +1,73 @@
+# Shaarpli
+Shaarpli is [Shaarli](shaarli.fr) for CLI, written in less than 200 lines of python.
+
+I need Shaarpli because Shaarli doesn't allow simply to modify the database using command-line,
+and is made to work with http interface. Looks not easily automatizable to me.
+
+So, i've coded that little project. See below for setup and features.
+
+
+## Database format
+The choice of DSV is pretty straighforward : each entry is a title, an url, and a description.
+Using [DSV separators](https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text), it's difficult to get it wrong.
+
+
+## Templating
+HTML/Markdown templates are made using python `format`. Basic, but efficient enough.
+Jinja2 will be used, in a probable future happening in a very uncertain time.
+
+
+## Codebase
+- *[template.py](shaarpli/template.py)*: definition of templates. Will be replaced one day by a read templating solution (jinja2 probably)
+- *[config.py](shaarpli/config.py)*: access to config, default values
+- *[data.py](shaarpli/data.py)*: access to database and useful primitives
+- *[core.py](shaarpli/core.py)*: called by main module, return the HTML to print
+- *[shaarpli.py](shaarpli/shaarpli.py)*: main module, to be called by CGI (cf setup), calling the core
+
+## features
+- [x] DSV database
+- [ ] markdown
+    - [x] canonic markdown
+    - [ ] markdown extensions
+- [ ] configuration
+    - [x] database
+    - [x] url
+    - [x] pagination
+    - [ ] template
+- [ ] themes support
+- [x] caching
+
+
+## Setup
+Retrieve the code from branch *stable*, put it where you want it to be. For instance:
+
+    git clone https://github.com/aluriak/shaarpli  /var/www/nothtml/shaarpli
+
+I use it with [uwsgi](http://uwsgi-docs.readthedocs.io/en/latest/index.html), so i have to (1) setup it, and (2) use it for shaarpli.
+
+Unless you know exactly what you do, you probably should do the same thing.
+
+The [quickstart guide](http://uwsgi-docs.readthedocs.io/en/latest/WSGIquickstart.html) is enough to setup uwsgi and get shaarpli working.
+
+
+
+## FAQ
+### philosophy ?
+Easy to hack, easy to use, easy to interface.  
+Some of my futur projects will need that last point. That's the main reason i can't use Shaarli.
+
+### Origin of the name ?
+Shaarpli name is simply shaar + p of python + li of CLI. Initially, it was *shaarcli*, but is was more difficult to say and write.
+On the other side, *Shaarpli* reminds *Sharply*, which is related to sharks by 4 letters, and that Python was used to build it.
+
+### What is a CGI, uwsgi and all these things ?
+I was lost too. Then i found that amazing [Digital Ocean tutorial](https://www.digitalocean.com/community/tutorials/how-to-set-up-uwsgi-and-nginx-to-serve-python-apps-on-ubuntu-14-04).
+Used API is out of date, but the explanations are, as all their tutorials AFAIK, very clear.  
+
+For the real API of uwsgi, you should refer to the documentation. The [quickstart guide](http://uwsgi-docs.readthedocs.io/en/latest/WSGIquickstart.html) is enough.
+To install Shaarpli, you don't have to code anything : just to run properly uwsgi, and setup it to use to start the app *shaarpli.py*.
+
+If you're not using nginx, i can't help you.
+
+### I got a SyntaxError !
+You are probably in dinopython. You can either use python 3 or fork shaarpli.
