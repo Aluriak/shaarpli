@@ -1,5 +1,5 @@
 # Shaarpli
-Shaarpli is [Shaarli](shaarli.fr) for CLI, written in less than 200 lines of python.
+Shaarpli is [Shaarli](http://shaarli.fr) for CLI, written in less than 200 lines of python.
 
 I need Shaarpli because Shaarli doesn't allow simply to modify the database using command-line,
 and is made to work with http interface. Looks not easily automatizable to me.
