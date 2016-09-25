@@ -49,6 +49,14 @@ def user_choose_makefile(names:iter=('Makefile', 'makefile', 'makefile.f')) -> s
 
 if __name__ == "__main__":
     recipes = OrderedDict()  # {recipe name: {commands}}
+
+    # serve
+    command = 'uwsgi --socket 127.0.0.1:{} --wsgi-file shaarpli/shaarpli.py'
+    recipes['serve'] = {command.format(
+        userstring('UWSGI port', default=3031),
+    )}
+
+    # ssh
     if userbool('upload through ssh ?', default=True):
         command = 'scp -P {port} shaarcli/* {user}@{host}:{path}'
         recipes['upload'] = {command.format(
