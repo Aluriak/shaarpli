@@ -58,8 +58,11 @@ if __name__ == "__main__":
 
     # ssh
     if userbool('upload through ssh ?', default=True):
-        upload_command = 'scp -P {port} shaarpli/* {user}@{host}:{path}'
-        retrieve_command = 'scp -P {port} {user}@{host}:{path}/* ./ '
+        upload_command = 'scp -r -P {port} ./$OUTPUT_FILES {user}@{host}:{path}'
+        retrieve_command = 'scp -r -P {port} {user}@{host}:{path}/$OUTPUT_FILES ./'
+                    #mv shaarpli/ old_shaarpli/
+                        scp -r -P 9834 lucas@163.172.222.20:~/dev_www/shaarpli/{shaarpli.py,shaarpli,data} ./
+
         params = {
             'host': userstring('hostname (IP or domain)', default='127.0.0.1'),
             'port': userint('port', default=22),
@@ -68,8 +71,12 @@ if __name__ == "__main__":
         }
         recipes['upload'] = {upload_command.format(**params)}
         recipes['retrieve'] = {
-            'mv shaarpli/ old_shaapli/',
+            'mkdir -p old_shaarpli/',
+            'mv $OUTPUT_FILES old_shaarpli/',
             retrieve_command.format(**params),
+        }
+        constants = {
+            'OUTPUT_FILES={{shaarpli.py,shaarpli}}'
         }
 
 
@@ -77,6 +84,7 @@ if __name__ == "__main__":
     makefile = user_choose_makefile()
     if makefile:
         with open(makefile, 'w') as fd:
+            fd.write('\n'.join(constants))
             for recipe, commands in recipes.items():
                 fd.write('{}:\n'.format(recipe))
                 fd.write('\t' + '\n\t'.join(commands) + '\n')
