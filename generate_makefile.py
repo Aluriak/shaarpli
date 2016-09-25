@@ -58,13 +58,19 @@ if __name__ == "__main__":
 
     # ssh
     if userbool('upload through ssh ?', default=True):
-        command = 'scp -P {port} shaarcli/* {user}@{host}:{path}'
-        recipes['upload'] = {command.format(
-            host=userstring('hostname (IP or domain)', default='127.0.0.1'),
-            port=userint('port', default=22),
-            user=userstring('user', default=getpass.getuser()),
-            path=userstring('path', default='~/shaarpli'),
-        )}
+        upload_command = 'scp -P {port} shaarpli/* {user}@{host}:{path}'
+        retrieve_command = 'scp -P {port} {user}@{host}:{path}/* ./ '
+        params = {
+            'host': userstring('hostname (IP or domain)', default='127.0.0.1'),
+            'port': userint('port', default=22),
+            'user': userstring('user', default=getpass.getuser()),
+            'path': userstring('path', default='~/shaarpli'),
+        }
+        recipes['upload'] = {upload_command.format(**params)}
+        recipes['retrieve'] = {
+            'mv shaarpli/ old_shaapli/',
+            retrieve_command.format(**params),
+        }
 
 
     # write the Makefile
