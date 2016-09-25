@@ -2,3 +2,6 @@
 __pycache__/
 *.vim
 venv/
+Makefile
+makefile
+makefile.f
