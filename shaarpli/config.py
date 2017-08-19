@@ -10,7 +10,7 @@ from collections import namedtuple
 
 
 CONFIG_FILE = 'data/config.ini'
-DEFAULT_CONFIG = """
+DEFAULT_CONFIG = """\
 [server]
 url = localhost
 cache_size = 128
@@ -43,5 +43,7 @@ def get() -> namedtuple:
     """Return a namedtuple of configuration"""
     config = configparser.ConfigParser()
     config.read_string(DEFAULT_CONFIG)
+    # TODO: enforce that config file do not add options or sections over
+    #  the default config (to avoid badly named options to lead dev to despair)
     config.read(CONFIG_FILE)  # override
     return as_namedtuple(config)
