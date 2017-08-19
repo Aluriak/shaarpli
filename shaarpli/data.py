@@ -16,6 +16,7 @@ import csv
 import time
 
 
+MEMORY_WISE = True  # define the method used to add links into database
 DATABASE_FILE = 'data/data.csv'
 DSV_FIELD_SEP = chr(31)
 DSV_RECORD_SEP = chr(30)
@@ -27,18 +28,50 @@ CSV_PARAMS = {
 
 
 def add(title, desc, url, *, database=DATABASE_FILE):
-    """Add given (title, desc, url) to given file"""
-    with open(database, 'a') as fd:
-        writer = csv.writer(fd, **CSV_PARAMS)
-        writer.writerow([title, desc, url])
+    """Prepend given entry (title, desc, url) to given file"""
+    lines = (title, desc, url),
+    extend(lines, database=database)
 
 
-def extend(lines:iter, *, database=DATABASE_FILE):
-    """Add (title, desc, url) in given iterable to given file"""
-    with open(database, 'a') as fd:
+def extend_memwise(lines:iter, *, database=DATABASE_FILE):
+    """Prepend entries (title, desc, url) in given lines to given file
+
+    This implementation is memory-wise : it uses an intermediate file to avoid
+    loading the full data in memory.
+    (so it is, consequently, potentially slow)
+
+    """
+    db_bak = database + '.bak'  # intermediate file containing previous entries
+    os.rename(database, db_bak)
+    # write new data in newly created file
+    with open(database, 'w') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
         for title, desc, url in lines:
             writer.writerow([title, desc, url])
+        with open(db_bak) as prev_entries:
+            reader = csv.reader(prev_entries, **CSV_PARAMS)
+            for entry in reader:
+                writer.writerow(entry)
+    os.remove(db_bak)
+
+def extend_timewise(lines:iter, *, database=DATABASE_FILE):
+    """Prepend entries (title, desc, url) in given lines to given file
+
+    This implementation is time-wise : it loads the full file in memory
+    in order to easily add the new data, then append the previous data.
+    (so it is, consequently, potentially hard on memory)
+
+    """
+    with open(database) as fd:
+        prev_entries = fd.read()
+    with open(database, 'w') as fd:
+        writer = csv.writer(fd, **CSV_PARAMS)
+        for title, desc, url in lines:
+            writer.writerow([title, desc, url])
+        fd.write(prev_entries)
+
+# this choice should be made through a config file parameter
+extend = extend_memwise if MEMORY_WISE else extend_timewise
 
 
 def create_default_database(database=DATABASE_FILE):
