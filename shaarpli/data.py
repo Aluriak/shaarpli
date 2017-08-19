@@ -202,13 +202,13 @@ class HandlerAggregator:
             extend_func=extend_memwise if config.database.memory_wise else extend_timewise
         )
         if config.autopublish.active:
+            self._source_entry_offset = 0
+            self.source_file = config.autopublish.filepath
+            self._max_source_offset = config.autopublish.maximal_data_duplication
             self.source = DatabaseHandler(
                 self.source_file,
                 extend_func=extend_append
             )
-            self._source_entry_offset = 0
-            self.source_file = config.autopublish.filepath
-            self._max_source_offset = config.autopublish.maximal_data_duplication
 
 
     def last_link(self) -> Link or None:
