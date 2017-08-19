@@ -25,7 +25,6 @@ import functools
 
 
 MEMORY_WISE = True  # define the method used to add links into database
-DATABASE_FILE = 'data/data.csv'
 DSV_FIELD_SEP = chr(31)
 DSV_RECORD_SEP = chr(30)
 CSV_PARAMS = {
@@ -42,13 +41,13 @@ TIME_EQUIVALENCE = {  # terms available for autopublish.every
 }
 
 
-def add(title, desc, url, *, database=DATABASE_FILE):
+def add(title, desc, url, database:str):
     """Prepend given entry (title, desc, url) to given file"""
     lines = (title, desc, url),
     extend(lines, database=database)
 
 
-def extend_memwise(lines:iter, *, database=DATABASE_FILE):
+def extend_memwise(lines:iter, database:str):
     """Prepend entries (title, desc, url) in given lines to given file
 
     This implementation is memory-wise : it uses an intermediate file to avoid
@@ -69,7 +68,7 @@ def extend_memwise(lines:iter, *, database=DATABASE_FILE):
                 writer.writerow(entry)
     os.remove(db_bak)
 
-def extend_timewise(lines:iter, *, database=DATABASE_FILE):
+def extend_timewise(lines:iter, database:str):
     """Prepend entries (title, desc, url) in given lines to given file
 
     This implementation is time-wise : it loads the full file in memory
@@ -85,7 +84,7 @@ def extend_timewise(lines:iter, *, database=DATABASE_FILE):
             writer.writerow([title, desc, url])
         fd.write(prev_entries)
 
-def extend_append(lines:iter, *, database=DATABASE_FILE):
+def extend_append(lines:iter, database:str):
     """Append entries (title, desc, url) in given lines to given file
 
     This implementation simply push the data at the end of the file.
@@ -102,7 +101,7 @@ def extend_append(lines:iter, *, database=DATABASE_FILE):
 extend = extend_memwise if MEMORY_WISE else extend_timewise
 
 
-def create_default_database(database=DATABASE_FILE):
+def create_default_database(database:str):
     """Add default database : some example links for new users"""
     extend((
         ('first link', 'is also the first  \n in database\n\n- a\n- b\n- c', 'http://github.com/aluriak/shaarpli'),
@@ -120,7 +119,7 @@ class DatabaseHandler:
 
     """
 
-    def __init__(self, filename=DATABASE_FILE, extend_func:callable=extend) -> iter:
+    def __init__(self, filename:str, extend_func:callable=extend) -> iter:
         self.name = filename
         assert self.exists()
         self.last_access_time = time.time()
