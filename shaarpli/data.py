@@ -57,6 +57,7 @@ class Reader:
         self.name = filename
         self.last_access_time = time.time()
         self._nb_link = None
+        assert self.exists()
 
     @property
     def links(self):
@@ -87,7 +88,16 @@ class Reader:
 
     def exists(self) -> bool:
         """True if databate contains something"""
-        return os.path.exists(self.name) and open(self.name).read().strip()
+        with open(self.name, 'a') as fd:
+            pass
+        try:
+            return os.path.exists(self.name)
+        except FileNotFoundError:
+            return False
+
+    def empty(self) -> bool:
+        """True if databate contains nothing"""
+        return not self.exists() or not open(self.name).read().strip()
 
     def out_of_date(self) -> bool:
         """True if database have changed since last access"""

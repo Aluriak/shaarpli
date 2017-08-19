@@ -58,7 +58,7 @@ def page_generator(page_number:int, config:dict, db:data.Reader) -> str:
 
     """
     link_per_page = int(config.html.link_per_page)
-    if not db.exists():
+    if db.empty():
         data.create_default_database()
     start = (page_number-1) * link_per_page
     db_reader = islice(db.links, start, start + link_per_page)
