@@ -22,6 +22,11 @@ title = shaarpli
 additional_header =
 additional_footer =
 
+[template]
+link = templates/link.mkd
+page = templates/page.mkd
+link_separator = templates/link_separator.mkd
+
 [database]
 filepath = data/data.csv
 loopkup_timestamp = 1
