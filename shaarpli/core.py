@@ -84,7 +84,7 @@ def uri_parameter(env) -> str:
 
 
 @lru_cache(maxsize=1)
-def load_static():
+def load_static() -> (tuple, callable, data.Reader):
     """Return all data that don't change between two call:
 
     Returns:
@@ -93,7 +93,8 @@ def load_static():
         db -- a data.Reader instance
 
     Without its lru_cache, this function can't assure the caching
-    of page generation.
+    of page generation (because creating a cached access to page generator
+    at each call).
     Calling load_static.cache_clear will delete all cache,
     and lead to the reparsing of config data.
 
