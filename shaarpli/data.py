@@ -25,14 +25,14 @@ CSV_PARAMS = {
 
 def add(title, desc, url, *, database=DATABASE_FILE):
     """Add given (title, desc, url) to given file"""
-    with open(database, 'w') as fd:
+    with open(database, 'a') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
         writer.writerow([title, desc, url])
 
 
 def extend(lines:iter, *, database=DATABASE_FILE):
     """Add (title, desc, url) in given iterable to given file"""
-    with open(database, 'w') as fd:
+    with open(database, 'a') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
         for title, desc, url in lines:
             writer.writerow([title, desc, url])
