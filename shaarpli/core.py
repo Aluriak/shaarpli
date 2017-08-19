@@ -49,12 +49,12 @@ def redirection(config) -> str:
     return REDIRECTION.format(config.server.url)
 
 
-def page_generator(page_number:int, config:dict, db:data.Reader) -> str:
+def page_generator(page_number:int, config:dict, db:data.DatabaseHandler) -> str:
     """Return the page after templating.
 
     page_number -- integer >= 1 giving the page requested by client
     config  -- namedtuple like object giving configuration
-    db -- a data.Reader instance
+    db -- a data.DatabaseHandler instance
 
     """
     link_per_page = int(config.html.link_per_page)
@@ -84,13 +84,13 @@ def uri_parameter(env) -> str:
 
 
 @lru_cache(maxsize=1)
-def load_static() -> (tuple, callable, data.Reader):
+def load_static() -> (tuple, callable, data.DatabaseHandler):
     """Return all data that don't change between two call:
 
     Returns:
         config -- a config namedtuple (see config.py)
         page_generator -- a wrapper around the `page` function
-        db -- a data.Reader instance
+        db -- a data.DatabaseHandler instance
 
     Without its lru_cache, this function can't assure the caching
     of page generation (because creating a cached access to page generator
@@ -100,7 +100,7 @@ def load_static() -> (tuple, callable, data.Reader):
 
     """
     cfg = config_module.get()
-    db = data.Reader(cfg.database.filepath)
+    db = data.DatabaseHandler(cfg.database.filepath)
 
     # caching
     if cfg.server.cache_size and int(cfg.server.cache_size) > 0:

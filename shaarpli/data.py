@@ -1,4 +1,4 @@
-"""Wrapper around the database call
+"""Wrapper around the database handling, and around the database handler.
 
 Database would be stored in DSV using standard delimiter,
 so chances are you would never need to escape anything in your text.
@@ -8,12 +8,20 @@ Solution: assume that fields are enclosed in double quotes.
 
 See https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
 
+
+DatabaseHandler allow one to manipulate database itself.
+
+HandlerAggregator allow one to manage DatabaseHandler at very high level,
+and implements the autopublish funtionnality.
+
 """
 
 
 import os
 import csv
 import time
+import itertools
+import functools
 
 
 MEMORY_WISE = True  # define the method used to add links into database
@@ -24,6 +32,13 @@ CSV_PARAMS = {
     'delimiter': DSV_FIELD_SEP,
     # 'lineterminator': DSV_RECORD_SEP,  # NOT HANDLED BY PYTHON. NOT A JOKE. WTF PYTHON.
     'lineterminator': '\n',
+}
+TIME_EQUIVALENCE = {  # terms available for autopublish.every
+    'minute': 60,
+    'hour': 60*60,
+    'day': 60*60*24,
+    'week': 60*60*24*7,
+    'year': 60*60*24*7*365
 }
 
 
@@ -70,6 +85,19 @@ def extend_timewise(lines:iter, *, database=DATABASE_FILE):
             writer.writerow([title, desc, url])
         fd.write(prev_entries)
 
+def extend_append(lines:iter, *, database=DATABASE_FILE):
+    """Append entries (title, desc, url) in given lines to given file
+
+    This implementation simply push the data at the end of the file.
+    Should not be used as main database, unless you want the last link added
+    to be the last link on the last page.
+
+    """
+    with open(database, 'a') as fd:
+        writer = csv.writer(fd, **CSV_PARAMS)
+        for title, desc, url in lines:
+            writer.writerow([title, desc, url])
+
 # this choice should be made through a config file parameter
 extend = extend_memwise if MEMORY_WISE else extend_timewise
 
@@ -82,15 +110,22 @@ def create_default_database(database=DATABASE_FILE):
     ), database=database)
 
 
-class Reader:
-    """Access to database in reading mode"""
+class DatabaseHandler:
+    """Access to database.
 
-    def __init__(self, filename=DATABASE_FILE) -> iter:
-        """Yield tuple (title, description, url)"""
+    Provides high-level methods allowing to probe database state,
+    and to add data.
+
+    Is also iterable over the data as 3-uplet (title, description, link).
+
+    """
+
+    def __init__(self, filename=DATABASE_FILE, extend_func:callable=extend) -> iter:
         self.name = filename
+        assert self.exists()
         self.last_access_time = time.time()
         self._nb_link = None
-        assert self.exists()
+        self.extend = functools.partial(extend_func, database=self.name)
 
     @property
     def links(self):
@@ -140,3 +175,116 @@ class Reader:
             self._nb_link = None
             return True
         return False
+
+
+class HandlerAggregator:
+    """Aggregation of 2 DatabaseHandler, with full responsibility over it.
+
+    One handler is the *source*, and the other the *target*.
+
+    An aggregator can:
+    - create handlers, based on a configuration (see config.py)
+    - move one entry from source to target
+    - detect, according to configuration, if a move must be performed
+
+    """
+
+    def __init__(self, config):
+        self._config = config
+        self.source = None
+        self.target_file = config.database.filepath
+        self.target = DatabaseHandler(
+            self.target_file,
+            extend_func=extend_memwise if config.database.memory_wise else extend_timewise
+        )
+        if config.autopublish.active:
+            self.source = DatabaseHandler(
+                self.source_file,
+                extend_func=extend_append
+            )
+            self._source_entry_offset = 0
+            self.source_file = config.autopublish.filepath
+            self._max_source_offset = config.autopublish.maximal_data_duplication
+            self._last_move = time.time()
+
+    @property
+    def hassource(self) -> bool: return bool(self.source)
+    @property
+    def handler(self) -> DatabaseHandler: return self.target
+
+    def _move_expected(self) -> bool:
+        """True iff an entry move is needed, according to configuration"""
+        if config.autopublish.active:
+            if isinstance(config.autopublish.every, int):
+                minimal_wait_time = config.autopublish.every
+            else:
+                # TODO: handle key lookup fail
+                if config.autopublish.every not in TIME_EQUIVALENCE:
+                    print('ERROR: config.autopublish.every ({}) is not a valid time.'
+                          'Expect an integer or one of {}.'
+                          ''.format(config.autopublish.every,
+                                    ', '.join(TIME_EQUIVALENCE)))
+                    return False
+                minimal_wait_time = TIME_EQUIVALENCE[config.autopublish.every]
+            real_wait_time = time.time() - self._last_move
+            return real_wait_time >= minimal_wait_time
+        else:  # no autopublish
+            return False
+
+    def _iter_source(self, nb:int=None) -> iter:
+        """Return a function source->lines, that yield nb lines of given source,
+        skipping entries according to the offset"""
+        first_entry_index = self._source_entry_offset
+        last_entry_index = (self._source_entry_offset + nb) if nb else None
+        return functools.partial(
+            itertools.islice, first_entry_index, last_entry_index
+        )
+
+    def move_entry(self, nb:int=1):
+        """Move *nb* entry from source handler to target handler"""
+        assert self.hassource, "HandlerAggregator needs a source to move entries"
+        # NB: Source handler adds the new entries at the end of the file.
+        #  Consequently, entries extracted from source are in increasing order
+        #  of age. While the target database is in decreasing order of age
+        #  (most recent first).
+        #  Therefore, the extracted entries must be inserted in reverse order.
+        entries = reversed(tuple(self._iter_source(nb)(self.source)))
+        self.target.extend(entries)
+        if self._source_entry_offset > self._max_source_offset:
+            self.clean_source()
+        self._last_move = time.time()
+
+    def clean_source(self):
+        """Delete entries in source database that are skipped because of the
+        entry offset.
+
+        Calling this method at each entry move can be costly,
+        so better call it when the offset is large.
+
+        As long as offset is not zero, there is data duplication between
+        the source and the target.
+        (since the entry skipped by the offset are the entries already
+        moved to target handler)
+
+        """
+        if self._source_entry_offset <= 0:
+            self._source_entry_offset = 0
+            return
+        # non-zero offset
+        database = self.source.name
+        db_bak = database + '.bak'  # intermediate file containing previous entries
+        os.rename(database, db_bak)
+        # write new data in newly created file
+        with open(database, 'w') as fd, open(db_bak) as prev_entries:
+            writer = csv.writer(fd, **CSV_PARAMS)
+            reader = csv.reader(prev_entries, **CSV_PARAMS)
+            for title, desc, url in self._iter_source(None)(reader):
+                writer.writerow([title, desc, url])
+        os.remove(db_bak)
+
+
+    def move_entry_if_expected(self):
+        """If a move is expected according to configuration, then perform
+        the move"""
+        if self._move_expected():
+            self.move_entry(nb=config.autopublish.link_per_publication)
