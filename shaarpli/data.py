@@ -209,7 +209,16 @@ class HandlerAggregator:
             self._source_entry_offset = 0
             self.source_file = config.autopublish.filepath
             self._max_source_offset = config.autopublish.maximal_data_duplication
-            self._last_move = time.time()
+
+
+    def last_link(self) -> Link or None:
+        """Return the last published link in target database, or None if no link
+        in database."""
+        try:
+            return next(iter(self.target))
+        except StopIteration:
+            return None
+
 
     @property
     def hassource(self) -> bool: return bool(self.source)
@@ -219,6 +228,8 @@ class HandlerAggregator:
     def _move_expected(self) -> bool:
         """True iff an entry move is needed, according to configuration"""
         if config.autopublish.active:
+            if self.last_link() is None:  # no initial publication
+                return True
             if isinstance(config.autopublish.every, int):
                 minimal_wait_time = config.autopublish.every
             else:
@@ -230,7 +241,7 @@ class HandlerAggregator:
                                     ', '.join(TIME_EQUIVALENCE)))
                     return False
                 minimal_wait_time = TIME_EQUIVALENCE[config.autopublish.every]
-            real_wait_time = time.time() - self._last_move
+            real_wait_time = time.time() - self.last_link.publication_date
             return real_wait_time >= minimal_wait_time
         else:  # no autopublish
             return False
@@ -256,7 +267,6 @@ class HandlerAggregator:
         self.target.extend(entries)
         if self._source_entry_offset > self._max_source_offset:
             self.clean_source()
-        self._last_move = time.time()
 
     def clean_source(self):
         """Delete entries in source database that are skipped because of the
