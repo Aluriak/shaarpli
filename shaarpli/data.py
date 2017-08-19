@@ -17,9 +17,8 @@ DATABASE_FILE = 'data/data.csv'
 DSV_FIELD_SEP = chr(31)
 DSV_RECORD_SEP = chr(30)
 CSV_PARAMS = {
-    'quoting': csv.QUOTE_NONE,
     'delimiter': DSV_FIELD_SEP,
-    'lineterminator': DSV_RECORD_SEP
+    # 'lineterminator': DSV_RECORD_SEP,  # NOT HANDLED BY PYTHON. NOT A JOKE. WTF PYTHON.
 }
 
 
