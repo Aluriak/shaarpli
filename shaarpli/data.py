@@ -1,7 +1,15 @@
 """Wrapper around the database call
 
-Database in stored in DSV using standard delimiter,
-so chances are you never need to escape anything in your text.
+Database would be stored in DSV using standard delimiter,
+so chances are you would never need to escape anything in your text.
+However, because of csv limitation on record separator (only \\n
+and \\r are valid), this perfect case can't be used.
+Solutions: either we use \\n for data and \\r to separate records,
+or we define that fields are enclosed in double quotes.
+
+The second, because of its relative complexity (not easy to add manually
+some links), is discarded.
+Therefore, all \\r are replaced by \\n in saved data.
 
 See https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
 
@@ -19,6 +27,7 @@ DSV_RECORD_SEP = chr(30)
 CSV_PARAMS = {
     'delimiter': DSV_FIELD_SEP,
     # 'lineterminator': DSV_RECORD_SEP,  # NOT HANDLED BY PYTHON. NOT A JOKE. WTF PYTHON.
+    'lineterminator': '\r',
 }
 
 
@@ -26,7 +35,7 @@ def add(title, desc, url, *, database=DATABASE_FILE):
     """Add given (title, desc, url) to given file"""
     with open(database, 'a') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
-        writer.writerow([title, desc, url])
+        writer.writerow([title.replace('\r', '\n'), desc.replace('\r', '\n'), url.replace('\r', '\n')])
 
 
 def extend(lines:iter, *, database=DATABASE_FILE):
@@ -34,14 +43,14 @@ def extend(lines:iter, *, database=DATABASE_FILE):
     with open(database, 'a') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
         for title, desc, url in lines:
-            writer.writerow([title, desc, url])
+            writer.writerow([title.replace('\r', '\n'), desc.replace('\r', '\n'), url.replace('\r', '\n')])
 
 
 def create_default_database(database=DATABASE_FILE):
     """Add default database : some example links for new users"""
     extend((
-        ('first link', 'is also the first in database', 'http://github.com/aluriak/shaarpli'),
-        ('second link', 'is also the last in database', 'http://github.com/aluriak/shaarpli'),
+        ('first link', 'is also the first\n in database', 'http://github.com/aluriak/shaarpli'),
+        ('second link', 'is also the last\n in database', 'http://github.com/aluriak/shaarpli'),
     ), database=database)
 
 
