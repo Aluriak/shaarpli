@@ -177,14 +177,18 @@ class DatabaseHandler:
 
 
 class HandlerAggregator:
-    """Aggregation of 2 DatabaseHandler, with full responsibility over it.
+    """Aggregation of at most 2 DatabaseHandler,
+    with full responsibility over it.
 
     One handler is the *source*, and the other the *target*.
+    (the source one is optional since the autopublish feature is not
+    necessarily activated)
 
     An aggregator can:
     - create handlers, based on a configuration (see config.py)
     - move one entry from source to target
     - detect, according to configuration, if a move must be performed
+    - behave like the target DatabaseHandler, with consideration of the source if any
 
     """
 
@@ -287,3 +291,31 @@ class HandlerAggregator:
         the move"""
         if self._move_expected():
             self.move_entry(nb=config.autopublish.link_per_publication)
+
+
+    # Follows functions allowing HandlerAggregator to behave
+    #  like the target DatabaseHandler
+
+    def empty(self) -> bool:
+        """True if both source and target are empty"""
+        return self.target.empty() and (not self.source or self.source.empty())
+
+    def out_of_date(self) -> bool:
+        """Proxy of target DatabaseHandler"""
+        return self.target.out_of_date()
+
+    @property
+    def name(self) -> str:
+        """Proxy of target DatabaseHandler"""
+        return self.target.name
+
+    @property
+    def links(self) -> iter:
+        """Proxy of target DatabaseHandler"""
+        return self.target.links
+
+    @property
+    def nb_link(self) -> iter:
+        """Proxy of target DatabaseHandler"""
+        return self.target.nb_link
+
