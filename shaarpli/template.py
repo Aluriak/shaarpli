@@ -32,10 +32,10 @@ def render_link(link:Link, template:str, *, as_html:bool=True) -> str:
 
 
 def footer(config, page_number, links) -> str:
-    base_url, page_access = config.server.url, config.server.page_access
+    base_url = config.server.url
     prev_page, next_page = page_number - 1, page_number + 1
-    link_prev = page_access.format(prev_page) if prev_page > 0 else ''
-    link_next = page_access.format(next_page) if next_page > 0 else ''
+    link_prev = '/{}'.format(prev_page) if prev_page > 0 else ''
+    link_next = '/{}'.format(next_page) if next_page > 0 else ''
     footer = ''
     if prev_page > 0:
         footer += '[prev]({})'.format(base_url + link_prev)
