@@ -1,2 +1,3 @@
 ## [{title}]({url})
-{desc}
+{publication_date}  
+{description}

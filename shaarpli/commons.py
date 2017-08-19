@@ -6,7 +6,7 @@
 from collections import namedtuple
 
 
-Link = namedtuple('Link', 'title, description, link, publication_date')
+Link = namedtuple('Link', 'title, description, url, publication_date')
 
 
 def file_content(filename:str, onfail='') -> str:

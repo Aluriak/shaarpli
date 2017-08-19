@@ -23,6 +23,8 @@ import time
 import itertools
 import functools
 
+from .commons import Link, file_content
+
 
 MEMORY_WISE = True  # define the method used to add links into database
 DSV_FIELD_SEP = chr(31)
@@ -41,14 +43,14 @@ TIME_EQUIVALENCE = {  # terms available for autopublish.every
 }
 
 
-def add(title, desc, url, database:str):
+def add(link:Link, database:str):
     """Prepend given entry (title, desc, url) to given file"""
-    lines = (title, desc, url),
+    lines = link,
     extend(lines, database=database)
 
 
-def extend_memwise(lines:iter, database:str):
-    """Prepend entries (title, desc, url) in given lines to given file
+def extend_memwise(links:iter, database:str):
+    """Prepend Link instances to given file
 
     This implementation is memory-wise : it uses an intermediate file to avoid
     loading the full data in memory.
@@ -60,16 +62,16 @@ def extend_memwise(lines:iter, database:str):
     # write new data in newly created file
     with open(database, 'w') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
-        for title, desc, url in lines:
-            writer.writerow([title, desc, url])
+        for link in links:
+            writer.writerow([*link])
         with open(db_bak) as prev_entries:
             reader = csv.reader(prev_entries, **CSV_PARAMS)
             for entry in reader:
                 writer.writerow(entry)
     os.remove(db_bak)
 
-def extend_timewise(lines:iter, database:str):
-    """Prepend entries (title, desc, url) in given lines to given file
+def extend_timewise(links:iter, database:str):
+    """Prepend Link instances to given file
 
     This implementation is time-wise : it loads the full file in memory
     in order to easily add the new data, then append the previous data.
@@ -80,12 +82,12 @@ def extend_timewise(lines:iter, database:str):
         prev_entries = fd.read()
     with open(database, 'w') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
-        for title, desc, url in lines:
-            writer.writerow([title, desc, url])
+        for link in links:
+            writer.writerow([*link])
         fd.write(prev_entries)
 
-def extend_append(lines:iter, database:str):
-    """Append entries (title, desc, url) in given lines to given file
+def extend_append(links:iter, database:str):
+    """Append Link instances to given file
 
     This implementation simply push the data at the end of the file.
     Should not be used as main database, unless you want the last link added
@@ -94,8 +96,8 @@ def extend_append(lines:iter, database:str):
     """
     with open(database, 'a') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
-        for title, desc, url in lines:
-            writer.writerow([title, desc, url])
+        for link in links:
+            writer.writerow([*link])
 
 # this choice should be made through a config file parameter
 extend = extend_memwise if MEMORY_WISE else extend_timewise
@@ -104,8 +106,8 @@ extend = extend_memwise if MEMORY_WISE else extend_timewise
 def create_default_database(database:str):
     """Add default database : some example links for new users"""
     extend((
-        ('first link', 'is also the first  \n in database\n\n- a\n- b\n- c', 'http://github.com/aluriak/shaarpli'),
-        ('second link', 'is also the last\n in database', 'http://github.com/aluriak/shaarpli'),
+        ('second link', 'is also the last\n in database', 'http://github.com/aluriak/shaarpli', time.time()),
+        ('first link', 'is also the first  \n in database\n\n- a\n- b\n- c', 'http://github.com/aluriak/shaarpli', time.time() - 25*3600),
     ), database=database)
 
 
@@ -144,13 +146,12 @@ class DatabaseHandler:
             for idx, line in enumerate(reader, start=1):
                 self._nb_link = max(self._nb_link, idx)
                 try:
-                    title, desc, url = line
+                    yield Link(*line)
                 except ValueError as e:  # unpack
                     print('ValueError:', e)
                     print(line.split(DSV_FIELD_SEP))
                     print('This line will be ignored.')
                     continue
-                yield title, desc, url
 
 
     def exists(self) -> bool:

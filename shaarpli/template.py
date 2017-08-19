@@ -7,7 +7,8 @@ from .commons import Link, file_content
 
 TEMPLATE_LINK = """
 ## [{title}]({url})
-{desc}
+{publication_date}  
+{description}
 """
 TEMPLATE_LINK_SEP = """
 <hr>
@@ -26,7 +27,7 @@ TEMPLATE_PAGE = """
 
 
 def render_link(link:Link, template:str, *, as_html:bool=True) -> str:
-    md = template.format(**link._as_dict())
+    md = template.format(**link._asdict())
     return markdown.markdown(md) if as_html else md
 
 
