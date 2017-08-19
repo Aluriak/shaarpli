@@ -19,7 +19,8 @@ cache_link = true
 [html]
 link_per_page = 10
 title = shaarpli
-page_access = /{}
+additional_header =
+additional_footer =
 
 [database]
 filepath = data/data.csv

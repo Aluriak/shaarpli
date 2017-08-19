@@ -18,6 +18,7 @@ TEMPLATE_PAGE = """
   
 <hr>
 {footer}
+{additional_footer}
 """
 
 
@@ -54,10 +55,17 @@ def render_full_page(config, page_number:int, links:tuple, *, as_html:bool=True)
     all_links = tuple(render_link(*args, as_html=False) for args in links)
     nb_links = len(all_links)
     merged_links = '\n<hr>\n'.join(all_links)
+
+    additional_footer = ''
+    if config.html.additional_footer:
+        with open(config.html.additional_footer) as fd:
+            additional_footer = fd.read()
+
     md = TEMPLATE_PAGE.format(
         title=title,
         body=merged_links,
-        footer=footer(config, page_number, all_links)
+        footer=footer(config, page_number, all_links),
+        additional_footer=additional_footer,
     )
     print('Page {} generated with {} links.'.format(page_number, nb_links))
     return markdown.markdown(md) if as_html else md
