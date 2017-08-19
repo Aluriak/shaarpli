@@ -59,7 +59,7 @@ def page_generator(page_number:int, config:dict, db:data.DatabaseHandler) -> str
     """
     link_per_page = int(config.html.link_per_page)
     if db.empty():
-        data.create_default_database()
+        data.create_default_database(db.name)
     start = (page_number-1) * link_per_page
     db_reader = islice(db.links, start, start + link_per_page)
     return template.render_full_page(config, page_number, db_reader)
