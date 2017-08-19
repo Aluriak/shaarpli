@@ -1,8 +1,6 @@
 """Provides API for template generation"""
 
 
-from functools import lru_cache
-
 import markdown
 
 
@@ -22,7 +20,6 @@ TEMPLATE_PAGE = """
 """
 
 
-@lru_cache(maxsize=128)
 def render_link(title, desc, url, *, as_html:bool=True) -> str:
     md = TEMPLATE_LINK.format(url=url, title=title, desc=desc)
     return markdown.markdown(md) if as_html else md
