@@ -38,15 +38,15 @@ def page_for(env) -> str:
 def generated_page(page_number:int, config, cached_page_generator, db) -> str:
     if db.out_of_date():
         cached_page_generator.cache_clear()
-    nb_link = int(db.nb_link or config.html_link_per_page)
-    if nb_link // int(config.html_link_per_page) >= page_number - 1:
+    nb_link = int(db.nb_link or config.html.link_per_page)
+    if nb_link // int(config.html.link_per_page) >= page_number - 1:
         return cached_page_generator(page_number, config, db)
     else:  # not enough links to be readed
         return redirection(config)
 
 
 def redirection(config) -> str:
-    return REDIRECTION.format(config.server_url)
+    return REDIRECTION.format(config.server.url)
 
 
 def page_generator(page_number:int, config:dict, db:data.Reader) -> str:
@@ -57,7 +57,7 @@ def page_generator(page_number:int, config:dict, db:data.Reader) -> str:
     db -- a data.Reader instance
 
     """
-    link_per_page = int(config.html_link_per_page)
+    link_per_page = int(config.html.link_per_page)
     if not db.exists():
         data.create_default_database()
     start = (page_number-1) * link_per_page
@@ -100,11 +100,11 @@ def load_static() -> (tuple, callable, data.Reader):
 
     """
     cfg = config_module.get()
-    db = data.Reader(cfg.database_filepath)
+    db = data.Reader(cfg.database.filepath)
 
     # caching
-    if cfg.server_cache_size and int(cfg.server_cache_size) > 0:
-        wrapper = lru_cache(maxsize=int(cfg.server_cache_size))
+    if cfg.server.cache_size and int(cfg.server.cache_size) > 0:
+        wrapper = lru_cache(maxsize=int(cfg.server.cache_size))
         cached_page_generator = wrapper(page_generator)
     else:
         cached_page_generator = page_generator

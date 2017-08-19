@@ -28,14 +28,14 @@ def render_link(title, desc, url, *, as_html:bool=True) -> str:
 
 
 def footer(config, page_number, links) -> str:
-    base_url, page_access = config.server_url, config.server_page_access
+    base_url, page_access = config.server.url, config.server.page_access
     prev_page, next_page = page_number - 1, page_number + 1
     link_prev = page_access.format(prev_page) if prev_page > 0 else ''
     link_next = page_access.format(next_page) if next_page > 0 else ''
     footer = ''
     if prev_page > 0:
         footer += '[prev]({})'.format(base_url + link_prev)
-    if next_page > 0 and len(links) == int(config.html_link_per_page):
+    if next_page > 0 and len(links) == int(config.html.link_per_page):
         footer += (' || ' if prev_page > 0 else '')
         footer += '[next]({})'.format(base_url + link_next)
     return footer
@@ -50,7 +50,7 @@ def render_full_page(config, page_number:int, links:tuple, *, as_html:bool=True)
     as_html -- return markdown if False, html if True
 
     """
-    title = config.html_title
+    title = config.html.title
     all_links = tuple(render_link(*args, as_html=False) for args in links)
     nb_links = len(all_links)
     merged_links = '\n<hr>\n'.join(all_links)

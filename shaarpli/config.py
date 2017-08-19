@@ -28,13 +28,14 @@ loopkup_timestamp = 1
 
 
 def as_namedtuple(config:configparser.ConfigParser) -> namedtuple:
-    fields, values = zip(*tuple(
-        (section + '_' + option, value)
-        for section in config.sections()
-        for option, value in config.items(section)
-    ))
-    cls = namedtuple('Config', fields)
-    return cls(*values)
+    def namedtuple_of_section(section):
+        """Return namedtuple containing fields and their values
+        for given section"""
+        options = dict(config.items(section))
+        return namedtuple(section.lower(), options.keys())(**options)
+    sections = {section: namedtuple_of_section(section)
+                for section in config.sections()}
+    return namedtuple('Config', sections.keys())(**sections)
 
 
 def get() -> namedtuple:
