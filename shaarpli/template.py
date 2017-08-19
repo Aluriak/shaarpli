@@ -2,11 +2,15 @@
 
 
 import markdown
+from .commons import Link, file_content
 
 
 TEMPLATE_LINK = """
 ## [{title}]({url})
 {desc}
+"""
+TEMPLATE_LINK_SEP = """
+<hr>
 """
 TEMPLATE_PAGE = """
 # {title}
@@ -21,8 +25,8 @@ TEMPLATE_PAGE = """
 """
 
 
-def render_link(title, desc, url, *, as_html:bool=True) -> str:
-    md = TEMPLATE_LINK.format(url=url, title=title, desc=desc)
+def render_link(link:Link, template:str, *, as_html:bool=True) -> str:
+    md = template.format(**link._as_dict())
     return markdown.markdown(md) if as_html else md
 
 
@@ -45,31 +49,23 @@ def render_full_page(config, page_number:int, links:tuple, *, as_html:bool=True)
 
     config -- a namedtuple containing the configuration (see config.py)
     page_number -- integer >= 1 giving the page number
-    links -- tuple of (title, desc, url)
+    links -- tuple of Link instances
     as_html -- return markdown if False, html if True
 
     """
-    title = config.html.title
-    all_links = tuple(render_link(*args, as_html=False) for args in links)
-    nb_links = len(all_links)
-    merged_links = '\n<hr>\n'.join(all_links)
+    template_link = file_content(config.template.link, onfail=TEMPLATE_LINK)
+    template_page = file_content(config.template.page, onfail=TEMPLATE_PAGE)
+    template_link_sep = file_content(config.template.page, onfail=TEMPLATE_LINK_SEP)
 
-    additional_footer = ''
-    if config.html.additional_footer:
-        with open(config.html.additional_footer) as fd:
-            additional_footer = fd.read()
+    all_links = tuple(render_link(link, template_link, as_html=False) for link in links)
+    merged_links = template_link_sep.join(all_links)
 
-    additional_header = ''
-    if config.html.additional_header:
-        with open(config.html.additional_header) as fd:
-            additional_header = fd.read()
-
-    md = TEMPLATE_PAGE.format(
-        title=title,
+    md = template_page.format(
+        title=config.html.title,
         body=merged_links,
         footer=footer(config, page_number, all_links),
-        additional_footer=additional_footer,
-        additional_header=additional_header,
+        additional_header=file_content(config.html.additional_header),
+        additional_footer=file_content(config.html.additional_footer),
     )
-    print('Page {} generated with {} links.'.format(page_number, nb_links))
+    print('Page {} generated with {} links.'.format(page_number, len(all_links)))
     return markdown.markdown(md) if as_html else md
