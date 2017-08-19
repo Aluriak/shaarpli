@@ -30,7 +30,7 @@ def add(title, desc, url, *, database=DATABASE_FILE):
     """Add given (title, desc, url) to given file"""
     with open(database, 'a') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
-        writer.writerow([title.replace('\r', '\n'), desc.replace('\r', '\n'), url.replace('\r', '\n')])
+        writer.writerow([title, desc, url])
 
 
 def extend(lines:iter, *, database=DATABASE_FILE):
@@ -38,7 +38,7 @@ def extend(lines:iter, *, database=DATABASE_FILE):
     with open(database, 'a') as fd:
         writer = csv.writer(fd, **CSV_PARAMS)
         for title, desc, url in lines:
-            writer.writerow([title.replace('\r', '\n'), desc.replace('\r', '\n'), url.replace('\r', '\n')])
+            writer.writerow([title, desc, url])
 
 
 def create_default_database(database=DATABASE_FILE):
