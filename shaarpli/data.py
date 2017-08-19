@@ -3,13 +3,8 @@
 Database would be stored in DSV using standard delimiter,
 so chances are you would never need to escape anything in your text.
 However, because of csv limitation on record separator (only \\n
-and \\r are valid), this perfect case can't be used.
-Solutions: either we use \\n for data and \\r to separate records,
-or we define that fields are enclosed in double quotes.
-
-The second, because of its relative complexity (not easy to add manually
-some links), is discarded.
-Therefore, all \\r are replaced by \\n in saved data.
+and \\r are valid, and synonymous), this perfect case can't be used.
+Solution: assume that fields are enclosed in double quotes.
 
 See https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
 
@@ -27,7 +22,7 @@ DSV_RECORD_SEP = chr(30)
 CSV_PARAMS = {
     'delimiter': DSV_FIELD_SEP,
     # 'lineterminator': DSV_RECORD_SEP,  # NOT HANDLED BY PYTHON. NOT A JOKE. WTF PYTHON.
-    'lineterminator': '\r',
+    'lineterminator': '\n',
 }
 
 
@@ -49,7 +44,7 @@ def extend(lines:iter, *, database=DATABASE_FILE):
 def create_default_database(database=DATABASE_FILE):
     """Add default database : some example links for new users"""
     extend((
-        ('first link', 'is also the first\n in database', 'http://github.com/aluriak/shaarpli'),
+        ('first link', 'is also the first  \n in database\n\n- a\n- b\n- c', 'http://github.com/aluriak/shaarpli'),
         ('second link', 'is also the last\n in database', 'http://github.com/aluriak/shaarpli'),
     ), database=database)
 
