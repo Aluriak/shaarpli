@@ -1,0 +1,9 @@
+# {title}
+{additional_header}
+  
+{body}
+
+  
+<hr>
+{footer}
+{additional_footer}
