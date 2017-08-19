@@ -1,7 +1,7 @@
 """Wrapper around the database call
 
 Database in stored in DSV using standard delimiter,
-so chances are you never need to espace anything in your text.
+so chances are you never need to escape anything in your text.
 
 See https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
 
