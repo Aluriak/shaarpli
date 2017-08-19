@@ -10,6 +10,7 @@ TEMPLATE_LINK = """
 """
 TEMPLATE_PAGE = """
 # {title}
+{additional_header}
   
 {body}
 
@@ -58,11 +59,17 @@ def render_full_page(config, page_number:int, links:tuple, *, as_html:bool=True)
         with open(config.html.additional_footer) as fd:
             additional_footer = fd.read()
 
+    additional_header = ''
+    if config.html.additional_header:
+        with open(config.html.additional_header) as fd:
+            additional_header = fd.read()
+
     md = TEMPLATE_PAGE.format(
         title=title,
         body=merged_links,
         footer=footer(config, page_number, all_links),
         additional_footer=additional_footer,
+        additional_header=additional_header,
     )
     print('Page {} generated with {} links.'.format(page_number, nb_links))
     return markdown.markdown(md) if as_html else md
