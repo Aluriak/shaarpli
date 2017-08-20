@@ -39,6 +39,15 @@ class Link():
             'publication_date': self._publication_date,
         }
 
+    @property
+    def title(self) -> str: return self._title
+    @property
+    def description(self) -> str: return self._description
+    @property
+    def url(self) -> str: return self._url
+    @property
+    def publication_date(self) -> int: return self._publication_date
+
 
 def file_content(filename:str, onfail='') -> str:
     """Return the content of given filename, or onfail
