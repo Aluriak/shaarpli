@@ -169,13 +169,14 @@ class DatabaseHandler:
         """True if databate contains nothing"""
         return not self.exists() or not open(self.name).read().strip()
 
-    def out_of_date(self) -> bool:
-        """True if database have changed since last access"""
-        link_change_time = self.last_link.publication_date
+    def out_of_date(self, last_link_rendered:Link) -> bool:
+        """True if database have changed since last link"""
+        link_change_time = last_link_rendered.publication_date
         file_change_time = int(os.path.getmtime(self.name))
+        link_is_older = link_change_time < file_change_time
         assert isinstance(file_change_time, int)
         assert isinstance(link_change_time, int)
-        return file_change_time > link_change_time
+        return link_is_older
 
 
 class HandlerAggregator:
@@ -314,9 +315,9 @@ class HandlerAggregator:
         """True if both source and target are empty"""
         return self.target.empty() and (not self.source or self.source.empty())
 
-    def out_of_date(self) -> bool:
+    def out_of_date(self, last_link_rendered:Link) -> bool:
         """Proxy of target DatabaseHandler"""
-        return self.target.out_of_date()
+        return self.target.out_of_date(last_link_rendered)
 
     @property
     def name(self) -> str:
