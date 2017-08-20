@@ -26,6 +26,7 @@ additional_footer =
 link = templates/link.mkd
 page = templates/page.mkd
 link_separator = templates/link_separator.mkd
+time_format = %%d/%%m/%%Y at %%H:%%M:%%S
 
 [database]
 filepath = data/data.csv
