@@ -27,7 +27,7 @@ TEMPLATE_PAGE = """
 
 
 def render_link(link:Link, template:str, *, as_html:bool=True) -> str:
-    md = template.format(**link._asdict())
+    md = template.format(**link.asdict())
     return markdown.markdown(md) if as_html else md
 
 
