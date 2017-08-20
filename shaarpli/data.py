@@ -125,11 +125,7 @@ class DatabaseHandler:
         self.name = filename
         assert self.exists()
         self.last_access_time = time.time()
-        self._compute_nb_link()
         self.extend = functools.partial(extend_func, database=self.name)
-
-    def _compute_nb_link(self):
-        self._nb_link = sum(1 for c in open(self.name) if c == DSV_RECORD_SEP)
 
 
     @property
@@ -137,15 +133,20 @@ class DatabaseHandler:
         return iter(self)
 
     @property
-    def nb_link(self):
-        return self._nb_link
+    def last_link(self) -> Link or None:
+        """Return the last published link in database, or None if no link
+        in database."""
+        try:
+            return next(iter(self))
+        except StopIteration:
+            return None
+
 
     def __iter__(self):
         self.last_access_time = time.time()
         with open(self.name) as fd:
             reader = csv.reader(fd, **CSV_PARAMS)
             for idx, line in enumerate(reader, start=1):
-                self._nb_link = max(self._nb_link, idx)
                 try:
                     yield Link.from_dsv(line)
                 except ValueError as e:  # unpack
@@ -170,12 +171,11 @@ class DatabaseHandler:
 
     def out_of_date(self) -> bool:
         """True if database have changed since last access"""
-        change_time = os.path.getmtime(self.name)
-        assert isinstance(change_time, float)
-        if change_time > self.last_access_time:
-            self._compute_nb_link()
-            return True
-        return False
+        link_change_time = self.last_link.publication_date
+        file_change_time = int(os.path.getmtime(self.name))
+        assert isinstance(file_change_time, int)
+        assert isinstance(link_change_time, int)
+        return file_change_time > link_change_time
 
 
 class HandlerAggregator:
@@ -211,15 +211,6 @@ class HandlerAggregator:
             )
 
 
-    def last_link(self) -> Link or None:
-        """Return the last published link in target database, or None if no link
-        in database."""
-        try:
-            return next(iter(self.target))
-        except StopIteration:
-            return None
-
-
     @property
     def hassource(self) -> bool: return bool(self.source)
     @property
@@ -227,36 +218,46 @@ class HandlerAggregator:
 
     def _move_expected(self) -> bool:
         """True iff an entry move is needed, according to configuration"""
+        config = self._config
         if config.autopublish.active:
-            if self.last_link() is None:  # no initial publication
+            if self.last_link is None:  # no initial publication
                 return True
-            if isinstance(config.autopublish.every, int):
-                minimal_wait_time = config.autopublish.every
-            else:
-                # TODO: handle key lookup fail
+            try:
+                minimal_wait_time = int(config.autopublish.every)
+            except ValueError:  # not a number
+                # TODO: handle key lookup fail better
                 if config.autopublish.every not in TIME_EQUIVALENCE:
                     print('ERROR: config.autopublish.every ({}) is not a valid time.'
                           'Expect an integer or one of {}.'
                           ''.format(config.autopublish.every,
                                     ', '.join(TIME_EQUIVALENCE)))
                     return False
-                minimal_wait_time = TIME_EQUIVALENCE[config.autopublish.every]
+                minimal_wait_time = int(TIME_EQUIVALENCE[config.autopublish.every])
             real_wait_time = time.time() - self.last_link.publication_date
             return real_wait_time >= minimal_wait_time
         else:  # no autopublish
             return False
 
-    def move_entry(self, nb:int=1):
-        """Move *nb* entry from source handler to target handler"""
+    def move_entry(self, nb:int=1) -> int:
+        """Move at most *nb* entry from source handler to target handler.
+
+        If *nb* is greater than the amount of remaining links,
+        all of them will be move.
+        Returns the number of link moved.
+
+        """
         assert self.hassource, "HandlerAggregator needs a source to move entries"
         # NB: Source handler adds the new entries at the end of the file.
         #  Consequently, entries extracted from source are in increasing order
         #  of age. While the target database is in decreasing order of age
         #  (most recent first).
         #  Therefore, the extracted entries must be inserted in reverse order.
-        entries = reversed(tuple(itertools.islice(self.source, 0, nb)))
-        self.publish(entries)
-        self._clean_source(nb)
+        entries = tuple(reversed(tuple(itertools.islice(self.source, 0, nb))))
+        nb_link_moved = len(entries)
+        if nb_link_moved > 0:
+            self.publish(entries)
+            self._clean_source(nb)
+        return nb_link_moved
 
     def publish(self, links:iter):
         """Add given Link instances to the database (target handler)
@@ -303,7 +304,7 @@ class HandlerAggregator:
         """If a move is expected according to configuration, then perform
         the move"""
         if self._move_expected():
-            self.move_entry(nb=config.autopublish.link_per_publication)
+            self.move_entry(nb=int(self._config.autopublish.link_per_publication))
 
 
     # Follows functions allowing HandlerAggregator to behave
@@ -328,7 +329,7 @@ class HandlerAggregator:
         return self.target.links
 
     @property
-    def nb_link(self) -> iter:
-        """Proxy of target DatabaseHandler"""
-        return self.target.nb_link
-
+    def last_link(self) -> Link or None:
+        """Return the last published link in target database, or None if no link
+        in database."""
+        return self.target.last_link
