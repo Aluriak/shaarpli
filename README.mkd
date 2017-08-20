@@ -8,12 +8,16 @@ So, i've coded that little project. See below for setup and features.
 
 
 ## Database format
-The choice of DSV is pretty straighforward : each entry is a title, an url, and a description.
+The choice of DSV is pretty straighforward : each entry is a title, an url, a description and a publication date.
 Using [DSV separators](https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text), it's difficult to get it wrong.
+
+However, since python do not support other characters than `\n` and `\n`
+for record separation, the reality is much less easy: data is enclosed in
+double-quotes and escaped as needed.
 
 
 ## Templating
-HTML/Markdown templates are made using python `format`. Basic, but efficient enough.
+HTML/Markdown [templates](templates/) are made using python `format`. Basic, but efficient enough.
 Jinja2 will be used, in a probable future happening in a very uncertain time.
 
 
@@ -26,15 +30,15 @@ Jinja2 will be used, in a probable future happening in a very uncertain time.
 
 ## features
 - [x] DSV database
-- [ ] markdown
-    - [x] canonic markdown
-    - [ ] markdown extensions
-- [ ] configuration
+- [ ] [use fifo](https://docs.python.org/3/library/os.html) instead of regular file ?
+- [x] write text in markdown
+- [ ] allow markdown extensions through configuration file
+- [x] configuration
     - [x] database
     - [x] url
-    - [x] pagination
-    - [ ] template
-- [ ] themes support
+    - [x] template
+    - [x] auto publication
+- [ ] CSS integration
 - [x] caching
 
 
