@@ -204,9 +204,7 @@ class HandlerAggregator:
             extend_func=extend_memwise if config.database.memory_wise else extend_timewise
         )
         if config.autopublish.active:
-            self._source_entry_offset = 0
             self.source_file = config.autopublish.filepath
-            self._max_source_offset = config.autopublish.maximal_data_duplication
             self.source = DatabaseHandler(
                 self.source_file,
                 extend_func=extend_append
@@ -247,15 +245,6 @@ class HandlerAggregator:
             return real_wait_time >= minimal_wait_time
         else:  # no autopublish
             return False
-
-    def _iter_source(self, nb:int=None) -> iter:
-        """Return a function source->lines, that yield nb lines of given source,
-        skipping entries according to the offset"""
-        first_entry_index = self._source_entry_offset
-        last_entry_index = (self._source_entry_offset + nb) if nb else None
-        return functools.partial(
-            itertools.islice, first_entry_index, last_entry_index
-        )
 
     def move_entry(self, nb:int=1):
         """Move *nb* entry from source handler to target handler"""
@@ -304,8 +293,9 @@ class HandlerAggregator:
         with open(database, 'w') as fd, open(db_bak) as prev_entries:
             writer = csv.writer(fd, **CSV_PARAMS)
             reader = csv.reader(prev_entries, **CSV_PARAMS)
-            for title, desc, url in self._iter_source(None)(reader):
-                writer.writerow([title, desc, url])
+            # ignore the first *nb* links
+            for entry in itertools.islice(reader, nb, None):
+                writer.writerow([*entry])
         os.remove(db_bak)
 
 

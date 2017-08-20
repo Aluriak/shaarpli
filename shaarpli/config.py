@@ -35,7 +35,6 @@ memory_wise = true
 [autopublish]
 active = false
 filepath = data/topublish.csv
-maximal_data_duplication = 10
 every = day
 link_per_publication = 1
 """
