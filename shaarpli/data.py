@@ -125,8 +125,12 @@ class DatabaseHandler:
         self.name = filename
         assert self.exists()
         self.last_access_time = time.time()
-        self._nb_link = None
+        self._compute_nb_link()
         self.extend = functools.partial(extend_func, database=self.name)
+
+    def _compute_nb_link(self):
+        self._nb_link = sum(1 for c in open(self.name) if c == DSV_RECORD_SEP)
+
 
     @property
     def links(self):
@@ -134,9 +138,6 @@ class DatabaseHandler:
 
     @property
     def nb_link(self):
-        if self._nb_link is None:
-            self._nb_link = len(tuple(c for c in open(self.name)
-                                      if c == DSV_RECORD_SEP))
         return self._nb_link
 
     def __iter__(self):
@@ -146,10 +147,10 @@ class DatabaseHandler:
             for idx, line in enumerate(reader, start=1):
                 self._nb_link = max(self._nb_link, idx)
                 try:
-                    yield Link(*line)
+                    yield Link.from_dsv(line)
                 except ValueError as e:  # unpack
                     print('ValueError:', e)
-                    print(line.split(DSV_FIELD_SEP))
+                    print(line)
                     print('This line will be ignored.')
                     continue
 
@@ -172,7 +173,7 @@ class DatabaseHandler:
         change_time = os.path.getmtime(self.name)
         assert isinstance(change_time, float)
         if change_time > self.last_access_time:
-            self._nb_link = None
+            self._compute_nb_link()
             return True
         return False
 
