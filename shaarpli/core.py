@@ -34,7 +34,7 @@ def page_for(env) -> str:
         return cached_page_generator.cache.html_repr()
 
     # At this point, parameters are invalid: replace them with default.
-    parameters, parameter = (), ''
+    parameters = ()
 
     # create default data if none available
     if db.empty():
@@ -44,7 +44,14 @@ def page_for(env) -> str:
     db.move_entry_if_expected()
 
     # other cases: show links
-    page_number = max(1, int(parameter) if parameter.isnumeric() else 1)
+    try:
+        page_number = int(parameter)
+    except ValueError:
+        page_number = 1
+
+    # requesting for non-published links
+    if page_number <= 0:
+        return '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Back-to-the-future-logo.svg/2000px-Back-to-the-future-logo.svg.png" alt="back to the future">'
 
     # cache invalidation if data changed
     if db.out_of_date():
