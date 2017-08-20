@@ -5,10 +5,8 @@ Allow caching.
 """
 
 
-import threading
 from itertools import islice
 from functools import lru_cache
-from urllib.parse import urlparse
 
 import cachetools
 
