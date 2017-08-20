@@ -1,0 +1,4 @@
+cachetools==2.0.1
+Markdown==2.6.8
+uWSGI==2.0.15
+pytest==3.2.1
