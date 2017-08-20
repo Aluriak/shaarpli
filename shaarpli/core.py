@@ -10,9 +10,10 @@ from itertools import islice
 from functools import lru_cache
 from urllib.parse import urlparse
 
-from . import data
-from . import config as config_module
-from . import template
+from shaarpli import data
+from shaarpli import config as config_module
+from shaarpli import template
+from shaarpli.commons import Link
 
 
 REDIRECTION = '<meta http-equiv="refresh" content="0; url={}" />'

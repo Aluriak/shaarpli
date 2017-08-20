@@ -23,7 +23,7 @@ import time
 import itertools
 import functools
 
-from .commons import Link, file_content
+from shaarpli.commons import Link, file_content
 
 
 MEMORY_WISE = True  # define the method used to add links into database

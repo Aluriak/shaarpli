@@ -4,7 +4,7 @@
 import time
 
 import markdown
-from .commons import Link, file_content
+from shaarpli.commons import Link, file_content
 
 
 TEMPLATE_LINK = """
