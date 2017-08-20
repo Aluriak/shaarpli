@@ -100,7 +100,7 @@ def load_static() -> (tuple, callable, data.DatabaseHandler):
 
     """
     cfg = config_module.get()
-    db = data.DatabaseHandler(cfg.database.filepath)
+    db = data.HandlerAggregator(cfg)
 
     # caching
     if cfg.server.cache_size and int(cfg.server.cache_size) > 0:
