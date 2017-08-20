@@ -191,6 +191,7 @@ class HandlerAggregator:
     - move one entry from source to target
     - detect, according to configuration, if a move must be performed
     - behave like the target DatabaseHandler, with consideration of the source if any
+    - allow publishing (add to target) and publishing later (add to source)
 
     """
 
@@ -264,28 +265,38 @@ class HandlerAggregator:
         #  of age. While the target database is in decreasing order of age
         #  (most recent first).
         #  Therefore, the extracted entries must be inserted in reverse order.
-        entries = reversed(tuple(self._iter_source(nb)(self.source)))
-        self.target.extend(entries)
-        if self._source_entry_offset > self._max_source_offset:
-            self.clean_source()
+        entries = reversed(tuple(itertools.islice(self.source, 0, nb)))
+        self.publish(entries)
+        self._clean_source(nb)
 
-    def clean_source(self):
-        """Delete entries in source database that are skipped because of the
-        entry offset.
+    def publish(self, links:iter):
+        """Add given Link instances to the database (target handler)
+        in given order.
 
-        Calling this method at each entry move can be costly,
-        so better call it when the offset is large.
-
-        As long as offset is not zero, there is data duplication between
-        the source and the target.
-        (since the entry skipped by the offset are the entries already
-        moved to target handler)
+        Will tell the links they are published.
 
         """
-        if self._source_entry_offset <= 0:
-            self._source_entry_offset = 0
-            return
-        # non-zero offset
+        links = tuple(links)
+        for link in links:
+            link.publish()
+        self.target.extend(links)
+
+    def publish_later(self, links:iter):
+        """Add given Link instances to the unpublished database (source handler)
+        in given order.
+
+        """
+        self.source.extend(links)
+
+    def _clean_source(self, nb:int):
+        """Remove the *nb* first entries from source database.
+
+        Calling this method at each entry move can be costly.
+        A system of offset on source was once implemented, but since
+        the offset value was not saved between two runs of the codebase,
+        it just leads to bugs.
+
+        """
         database = self.source.name
         db_bak = database + '.bak'  # intermediate file containing previous entries
         os.rename(database, db_bak)
