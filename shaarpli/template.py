@@ -1,6 +1,8 @@
 """Provides API for template generation"""
 
 
+import time
+
 import markdown
 from .commons import Link, file_content
 
@@ -26,9 +28,14 @@ TEMPLATE_PAGE = """
 """
 
 
-def render_link(link:Link, template:str, *, as_html:bool=True) -> str:
-    md = template.format(**link.asdict())
-    return markdown.markdown(md) if as_html else md
+def render_link(link:Link, template:str, config) -> str:
+    fields = link.asdict()
+    t = time.localtime(fields['publication_date'])
+    if config.template.time_format:
+        fields['publication_date'] = time.strftime(config.template.time_format, t)
+    else:  # no time format -> user do not want time
+        fields['publication_date'] = ''
+    return template.format(**fields)
 
 
 def footer(config, page_number, links) -> str:
@@ -58,7 +65,7 @@ def render_full_page(config, page_number:int, links:tuple, *, as_html:bool=True)
     template_page = file_content(config.template.page, onfail=TEMPLATE_PAGE)
     template_link_sep = file_content(config.template.page, onfail=TEMPLATE_LINK_SEP)
 
-    all_links = tuple(render_link(link, template_link, as_html=False) for link in links)
+    all_links = tuple(render_link(link, template_link, config) for link in links)
     merged_links = template_link_sep.join(all_links)
 
     md = template_page.format(
