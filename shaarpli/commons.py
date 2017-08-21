@@ -4,6 +4,7 @@
 
 
 import time
+import tempfile as tempfile_module
 
 
 class Link():
@@ -63,3 +64,8 @@ def file_content(filename:str, onfail='') -> str:
     except FileNotFoundError:
         content = onfail
     return content
+
+
+def tempfile() -> str:
+    """Return the name of a writable temporary file"""
+    return tempfile_module.NamedTemporaryFile(delete=False).name
