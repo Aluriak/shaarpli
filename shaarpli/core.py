@@ -80,7 +80,8 @@ def page_for(env) -> str:
     last_link_rendered = PAGES[1][0] if 1 in PAGES else None
     if last_link_rendered and DB.out_of_date(last_link_rendered):
         print('DB OUT OF DATE')
-        PAGES, RENDERING = {}, {}
+        PAGES = SLFUCache(CONFIG.server.cache_size)
+        RENDERING = SLFUCache(CONFIG.server.cache_size)
 
     # render the page, or get a redirection to the base site
     render_page(page_number, CONFIG, DB)
