@@ -17,6 +17,7 @@ TEMPLATE_LINK_SEP = """
 """
 TEMPLATE_PAGE = """
 # {title}
+> {subtitle}
 {additional_header}
   
 {body}
@@ -29,6 +30,7 @@ TEMPLATE_PAGE = """
 
 
 def render_link(link:Link, template:str, config) -> str:
+    """Render a single link in markdown"""
     fields = link.asdict()
     t = time.localtime(fields['publication_date'])
     if config.template.time_format:
@@ -39,6 +41,7 @@ def render_link(link:Link, template:str, config) -> str:
 
 
 def footer(config, page_number, links) -> str:
+    """Build and return the footer in markdown"""
     base_url = config.server.url
     prev_page, next_page = page_number - 1, page_number + 1
     link_prev = '/{}'.format(prev_page) if prev_page > 0 else ''
@@ -52,7 +55,29 @@ def footer(config, page_number, links) -> str:
     return footer
 
 
-def render_full_page(config, page_number:int, links:tuple, *, as_html:bool=True) -> str:
+def subtitle(config, db) -> str:
+    """Build and return the subtitle defined in config file"""
+    if not config.autopublish.active:
+        message = config.autopublish.message_noautopublish
+    else:
+        unpub = db.nb_unpublished_links()
+        if unpub >= 2:
+            message = config.autopublish.message_2
+        elif unpub == 1:
+            message = config.autopublish.message_1
+        elif unpub == 0:
+            message = config.autopublish.message_0
+    try:
+        every = int(config.autopublish.every)
+    except ValueError:
+        every = config.autopublish.every
+    else:
+        every = '{} second'.format(every) + ('s' if every > 1 else '')
+    return message.format(remaining=unpub, every=every)
+
+
+def render_full_page(config, page_number:int, links:tuple, db,
+                     *, as_html:bool=True) -> str:
     """Full page in html (or markdown if not as_html).
 
     config -- a namedtuple containing the configuration (see config.py)
@@ -74,6 +99,7 @@ def render_full_page(config, page_number:int, links:tuple, *, as_html:bool=True)
         footer=footer(config, page_number, all_links),
         additional_header=file_content(config.html.additional_header),
         additional_footer=file_content(config.html.additional_footer),
+        subtitle=subtitle(config, db),
     )
     print('Page {} generated with {} links.'.format(page_number, len(all_links)))
     return markdown.markdown(md) if as_html else md

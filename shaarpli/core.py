@@ -127,7 +127,7 @@ def render_page(nb:int, config, db):
     create_page(nb, config, db)
     if nb not in PAGES: return  # not created because too few links
     # the page exists, so the rendering is possible
-    RENDERING[nb] = template.render_full_page(config, nb, PAGES[nb])
+    RENDERING[nb] = template.render_full_page(config, nb, PAGES[nb], db)
 
 
 def redirection(config) -> str:
