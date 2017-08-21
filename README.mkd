@@ -38,7 +38,9 @@ Jinja2 will be used, in a probable future happening in a very uncertain time.
     - [x] url
     - [x] template
     - [x] auto publication
-- [ ] CSS integration
+- [ ] templating
+    - [ ] CSS
+    - [ ] use a real templating engine
 - [x] caching
 
 
