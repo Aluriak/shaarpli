@@ -38,6 +38,10 @@ active = false
 filepath = data/topublish.csv
 every = day
 link_per_publication = 1
+message_2 = One link per {every} for the next {remaining} {every}s.
+message_1 = One link per {every} until tomorrow.
+message_0 = One link per {every}, now paused.
+message_noautopublish = powered by shaarpli
 """
 
 
