@@ -132,6 +132,16 @@ class DatabaseHandler:
     def links(self):
         return iter(self)
 
+    def nb_link(self) -> int:
+        """Returns the number of link in the database.
+
+        It will come accross the full database, so it's not a good
+        idea to use this method on a regular basis.
+        (or on a big database)
+
+        """
+        return sum(1 for link in self.links)
+
     @property
     def last_link(self) -> Link or None:
         """Return the last published link in database, or None if no link
@@ -334,3 +344,11 @@ class HandlerAggregator:
         """Return the last published link in target database, or None if no link
         in database."""
         return self.target.last_link
+
+    def nb_unpublished_links(self) -> int:
+        """Return the number of links in source database.
+
+        Will read the full source database.
+
+        """
+        return self.source.nb_link()
