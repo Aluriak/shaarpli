@@ -63,7 +63,8 @@ def page_for(env) -> str:
         data_module.create_default_database(DB.name)
 
     # move the next link if needed
-    DB.move_entry_if_expected()
+    if CONFIG.autopublish.active:
+        DB.move_entry_if_expected()
 
     # other cases: parameter is the page number
     try:
