@@ -9,6 +9,7 @@ from itertools import islice
 from shaarpli import data as data_module
 from shaarpli import config as config_module
 from shaarpli import template
+from shaarpli.cache import SLFUCache
 from shaarpli.commons import Link
 
 
@@ -16,11 +17,11 @@ REDIRECTION = '<meta http-equiv="refresh" content="0; url={}" />'
 UNIQID = 0
 
 # GLOBAL DATA (conserved between two calls)
-PAGES = {}
-RENDERING = {}
 CONFIG = config_module.get()
 DB = data_module.HandlerAggregator(CONFIG)
 LAST_LINK_RENDERED = None
+PAGES = SLFUCache(CONFIG.server.cache_size)
+RENDERING = SLFUCache(CONFIG.server.cache_size)
 
 
 def page_for(env) -> str:
@@ -35,6 +36,9 @@ def page_for(env) -> str:
     parameter = parameters[0] if len(parameters) > 0 else '1'
 
     global UNIQID
+    if parameter == 'cache':
+        return RENDERING.html_repr() + '<hr>' + PAGES.html_repr()
+
     if parameter == 'stack':
         for _ in range(int(parameters[1]) if len(parameters) > 1 else 1):
             UNIQID += 1
@@ -81,14 +85,10 @@ def page_for(env) -> str:
     render_page(page_number, CONFIG, DB)
     html = RENDERING.get(page_number, redirection(CONFIG))
 
-    # handle the cache size
+    # handle the no-cache option
     if int(CONFIG.server.cache_size) <= 0:
-        PAGES, RENDERING = {}, {}
-    else:
-        while len(RENDERING) > int(CONFIG.server.cache_size):
-            del RENDERING[max(RENDERING.keys())]
-        while len(PAGES) > int(CONFIG.server.cache_size):
-            del PAGES[max(PAGES.keys())]
+        PAGES = SLFUCache(CONFIG.server.cache_size)
+        RENDERING = SLFUCache(CONFIG.server.cache_size)
 
     # send the html to end-user
     return html
