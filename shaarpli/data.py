@@ -183,10 +183,9 @@ class DatabaseHandler:
         """True if database have changed since last link"""
         link_change_time = last_link_rendered.publication_date
         file_change_time = int(os.path.getmtime(self.name))
-        link_is_older = link_change_time < file_change_time
         assert isinstance(file_change_time, int)
         assert isinstance(link_change_time, int)
-        return link_is_older
+        return link_change_time < file_change_time  # link is older
 
 
 class HandlerAggregator:
