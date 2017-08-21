@@ -48,6 +48,11 @@ class Link():
     @property
     def publication_date(self) -> int: return self._publication_date
 
+    def __str__(self):
+        return '{}: {}: <a href="{}">{}</a><br>'.format(
+            self.publication_date, self.title, self.url, self.description
+        )
+
 
 def file_content(filename:str, onfail='') -> str:
     """Return the content of given filename, or onfail
