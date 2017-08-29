@@ -23,7 +23,7 @@ with open(DATA_TO_ADD) as fd:
 
 
 # write data into database
-WORKING_DIR = os.dirname(os.realpath(sys.argv[1]))
+WORKING_DIR = os.path.dirname(os.path.realpath(sys.argv[0]))
 os.chdir(WORKING_DIR)
 
 with open(DATABASE, 'a') as fd:
