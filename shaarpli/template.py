@@ -16,6 +16,7 @@ TEMPLATE_LINK_SEP = """
 <hr>
 """
 TEMPLATE_PAGE = """
+<meta charset="utf-8"/>
 # {title}
 > {subtitle}
 {additional_header}
